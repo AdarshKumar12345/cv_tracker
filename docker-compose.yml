@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: cv_tracker_db
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: cv_tracker
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cv_tracker_backend
+    restart: always
+    ports:
+      - '5001:5001'
+    environment:
+      PORT: 5001
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/cv_tracker
+      JWT_ACCESS_SECRET: production_super_secret_access_key_2026
+      JWT_REFRESH_SECRET: production_super_secret_refresh_key_2026
+      CLIENT_URL: http://localhost:3000
+      UPLOAD_DIR: uploads
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cv_tracker_frontend
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5001/api
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
+  backend_uploads:
