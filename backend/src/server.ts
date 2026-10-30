@@ -79,12 +79,15 @@ const authLimiter = rateLimit({
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/auth/login', authLimiter);
+app.use('/auth/register', authLimiter);
 
 // Serve uploads statically if needed
 const uploadPath = path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads');
 app.use('/uploads', express.static(uploadPath));
+app.use('/api/uploads', express.static(uploadPath));
 
-// API Routes
+// API Routes with /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/resumes', resumeRoutes);
@@ -93,14 +96,27 @@ app.use('/api/interviews', interviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/activities', activityRoutes);
 
-// Health check
-app.get('/api/health', (_req: Request, res: Response) => {
+// Also mount without /api prefix to handle proxies or clients calling root
+app.use('/auth', authRoutes);
+app.use('/applications', applicationRoutes);
+app.use('/resumes', resumeRoutes);
+app.use('/companies', companyRoutes);
+app.use('/interviews', interviewRoutes);
+app.use('/analytics', analyticsRoutes);
+app.use('/activities', activityRoutes);
+
+// Health check and root ping
+const healthResponse = (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
-});
+};
+
+app.get('/api/health', healthResponse);
+app.get('/health', healthResponse);
+app.get('/', healthResponse);
 
 // 404 Handler
 app.use((_req: Request, res: Response) => {
