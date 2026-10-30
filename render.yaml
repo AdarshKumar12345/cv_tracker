@@ -28,7 +28,3 @@ services:
         sync: false
       - key: CLIENT_URL
         sync: false
-    disk:
-      name: resume-uploads
-      mountPath: /app/uploads
-      sizeGB: 1
